@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代码日和 · 代码决策器</title>
+<meta name="description" content="一个日系清新的代码决策器。写下纠结，抽一支代码签。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f5e6e2'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23bd7d73' stroke-width='2'/%3E%3Ctext x='32' y='39' font-size='20' text-anchor='middle' fill='%23bd7d73' font-family='serif'%3E日%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #f7f4ed;
+    --paper-2: #fffdf7;
+    --paper-3: #f2ede2;
+    --ink: #34423b;
+    --ink-2: #56635c;
+    --ink-3: #77827a;
+    --line: #dcded3;
+    --line-dark: #c9cfc4;
+    --mint: #b8cec1;
+    --mint-2: #e7f0eb;
+    --mint-deep: #55745f;
+    --sakura: #e9c6c0;
+    --sakura-2: #f5e6e2;
+    --sakura-deep: #a9675e;
+    --gold: #a98c57;
+    --sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --jp: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    --mono: "SFMono-Regular", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+    --shadow: 0 30px 60px -36px rgba(52, 66, 59, .38);
+  }
+
+  *,*::before,*::after{ box-sizing: border-box; }
+  html{ -webkit-text-size-adjust: 100%; }
+  body{
+    margin: 0;
+    min-height: 100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body::before{
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 620px at 2% -8%, rgba(184, 206, 193, .3), transparent 62%),
+      radial-gradient(760px 520px at 102% 104%, rgba(233, 198, 192, .22), transparent 64%);
+  }
+  body::after{
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    pointer-events: none;
+    opacity: .028;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection{ background: #ecd8d3; color: var(--ink); }
+  button, textarea{ font: inherit; }
+  button{ -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, textarea:focus-visible{
+    outline: 2px solid rgba(85, 116, 95, .45);
+    outline-offset: 3px;
+  }
+
+  .page{
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    --gutter: clamp(22px, 6vw, 80px);
+  }
+  .site-header, .layout, .site-footer{
+    width: min(1180px, calc(100% - var(--gutter) * 2));
+    margin-inline: auto;
+  }
+
+  /* ---------- header ---------- */
+  .site-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 27px 0 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand{ display: flex; align-items: center; gap: 13px; }
+  .seal{
+    width: 45px; height: 45px;
+    flex: 0 0 45px;
+    display: flex; align-items: center; justify-content: center;
+    writing-mode: vertical-rl;
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: .12em;
+    line-height: 1.15;
+    color: var(--sakura-deep);
+    background: var(--sakura-2);
+    border: 1px solid rgba(169, 103, 94, .45);
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 3px rgba(255, 253, 247, .55), 0 2px 5px rgba(52, 66, 59, .05);
+    transform: rotate(-2deg);
+  }
+  .brand-title{
+    display: block;
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: .17em;
+    line-height: 1.15;
+  }
+  .brand-sub{
+    display: block;
+    margin-top: 5px;
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: .26em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .header-right{ text-align: right; font-size: 10px; letter-spacing: .13em; color: var(--ink-3); }
+  .header-date{ color: var(--ink-2); }
+  .header-almanac{ margin-top: 6px; font-size: 9px; letter-spacing: .14em; color: var(--ink-3); }
+  .header-almanac .yi{ color: var(--mint-deep); }
+  .header-almanac .ji{ color: var(--sakura-deep); }
+  .header-tagline{ font-family: var(--jp); margin-left: 6px; }
+
+  /* ---------- layout ---------- */
+  .layout{
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+    gap: clamp(44px, 6vw, 94px);
+    align-items: start;
+    padding: 42px 0 30px;
+  }
+  .write-panel{ padding-top: 7px; max-width: 520px; }
+  .section-label{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: .24em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .section-label .num{ font-family: var(--mono); font-size: 9px; letter-spacing: .06em; color: var(--mint-deep); }
+  .section-label .rule{ width: 32px; height: 1px; background: var(--line-dark); }
+
+  h1{
+    margin: 18px 0 14px;
+    font-family: var(--serif);
+    font-size: clamp(36px, 4.2vw, 50px);
+    font-weight: 500;
+    line-height: 1.32;
+    letter-spacing: .035em;
+    color: var(--ink);
+  }
+  .hl{ position: relative; display: inline-block; white-space: nowrap; z-index: 0; }
+  .hl::after{
+    content: "";
+    position: absolute;
+    left: -2%; right: -2%;
+    bottom: 8%;
+    height: 30%;
+    z-index: -1;
+    background: var(--sakura-2);
+    border-radius: 55% 45% 52% 48%;
+    transform: rotate(-1.2deg);
+  }
+  .lede{
+    margin: 0;
+    max-width: 430px;
+    font-size: 12.8px;
+    line-height: 1.95;
+    color: var(--ink-2);
+    letter-spacing: .02em;
+  }
+
+  .presets{ margin-top: 24px; }
+  .presets-head{
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    font-size: 9px;
+    letter-spacing: .2em;
+    color: var(--ink-3);
+  }
+  .presets-head .jp{ font-family: var(--jp); font-size: 9.5px; letter-spacing: .12em; }
+  .chips{ display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+  .chip{
+    appearance: none;
+    height: 30px;
+    padding: 0 13px;
+    border: 1px solid var(--line-dark);
+    border-radius: 999px;
+    background: rgba(255, 253, 247, .35);
+    color: var(--ink-2);
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease;
+  }
+  .chip:hover{ background: var(--paper-2); border-color: var(--mint); color: var(--ink); transform: translateY(-1px); }
+  .chip.is-active{ background: var(--mint-2); border-color: var(--mint); color: var(--mint-deep); }
+
+  /* ---------- editor ---------- */
+  .editor-shell{
+    margin-top: 21px;
+    border: 1px solid var(--line-dark);
+    border-radius: 9px;
+    background: var(--paper-2);
+    overflow: hidden;
+    transition: border-color .25s ease, box-shadow .25s ease;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 16px 34px -32px rgba(52, 66, 59, .4);
+  }
+  .editor-shell:focus-within{
+    border-color: rgba(85, 116, 95, .65);
+    box-shadow: 0 0 0 3px rgba(85, 116, 95, .07), 0 18px 36px -32px rgba(52, 66, 59, .4);
+  }
+  .editor-shell.has-error{ border-color: rgba(169, 103, 94, .75); animation: editor-shake .35s ease; }
+  .editor-bar{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 37px;
+    padding: 0 13px;
+    background: #f4efe5;
+    border-bottom: 1px solid var(--line);
+  }
+  .win-dots{ display: flex; gap: 5px; }
+  .win-dots span{ width: 6px; height: 6px; border-radius: 50%; background: #dfb3ac; }
+  .win-dots span:nth-child(2){ background: #d8c59d; }
+  .win-dots span:nth-child(3){ background: #b4c9b9; }
+  .file-name{ margin-left: 3px; font-family: var(--mono); font-size: 10px; letter-spacing: .05em; color: var(--ink-3); }
+  .editor-count{ margin-left: auto; font-size: 9px; letter-spacing: .1em; color: var(--ink-3); transition: color .2s; }
+  .clear-btn{
+    appearance: none;
+    border: 0;
+    border-left: 1px solid var(--line);
+    background: transparent;
+    padding: 2px 0 2px 8px;
+    font-size: 9px;
+    letter-spacing: .1em;
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+  .clear-btn:hover{ color: var(--ink); }
+  .editor-body{ display: flex; height: 164px; }
+  .line-numbers{
+    flex: 0 0 38px;
+    padding: 13px 8px 13px 0;
+    overflow: hidden;
+    text-align: right;
+    background: #fbf7ef;
+    border-right: 1px solid rgba(220, 222, 211, .7);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    line-height: 25px;
+    color: #b6bdb4;
+    user-select: none;
+  }
+  .line-numbers span{ display: block; height: 25px; }
+  #options{
+    flex: 1;
+    width: 100%;
+    height: 164px;
+    padding: 13px 15px;
+    border: 0;
+    outline: 0;
+    resize: none;
+    background: transparent;
+    color: #46534c;
+    caret-color: var(--sakura-deep);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 25px;
+  }
+  #options::placeholder{ color: #b8beb5; }
+  #options::-webkit-scrollbar{ width: 6px; }
+  #options::-webkit-scrollbar-thumb{ background: var(--line-dark); border-radius: 99px; }
+  .error{
+    min-height: 19px;
+    margin: 7px 2px 0;
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    color: var(--sakura-deep);
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .error.show{ opacity: 1; transform: none; }
+
+  .actions{ display: flex; align-items: center; gap: 18px; margin-top: 12px; }
+  .draw-btn{
+    appearance: none;
+    height: 52px;
+    min-width: 176px;
+    padding: 0 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper-2);
+    font-size: 12.5px;
+    letter-spacing: .14em;
+    cursor: pointer;
+    box-shadow: 0 14px 26px -20px rgba(52, 66, 59, .8);
+    transition: transform .25s ease, box-shadow .25s ease, background .25s ease, opacity .2s ease;
+  }
+  .draw-btn .kana{
+    padding-left: 10px;
+    border-left: 1px solid rgba(255, 255, 255, .22);
+    font-family: var(--jp);
+    font-size: 9.5px;
+    letter-spacing: .1em;
+    color: #b9c9c0;
+  }
+  .draw-btn .arrow{
+    width: 25px; height: 25px;
+    display: grid; place-items: center;
+    border: 1px solid rgba(255, 255, 255, .26);
+    border-radius: 50%;
+    font-family: var(--jp);
+    font-size: 12px;
+    color: var(--paper-2);
+    transition: transform .3s ease;
+  }
+  .draw-btn:hover:not(:disabled){ transform: translateY(-2px); background: #2d3a34; box-shadow: 0 18px 30px -20px rgba(52, 66, 59, .8); }
+  .draw-btn:hover:not(:disabled) .arrow{ transform: translateX(2px) rotate(-8deg); }
+  .draw-btn:disabled{ cursor: progress; opacity: .82; }
+  .draw-btn.is-loading .arrow{ animation: spin 1s linear infinite; }
+  .action-note{ font-size: 9.5px; line-height: 1.9; letter-spacing: .05em; color: var(--ink-3); }
+
+  .quote{
+    margin: 25px 0 0;
+    padding-left: 15px;
+    border-left: 1px solid var(--line-dark);
+    font-family: var(--serif);
+    font-size: 11.5px;
+    line-height: 2;
+    letter-spacing: .04em;
+    color: var(--ink-2);
+  }
+
+  /* ---------- stage ---------- */
+  .stage-panel{ width: 100%; max-width: 560px; justify-self: end; }
+  .stage{
+    position: relative;
+    isolation: isolate;
+    margin-top: 15px;
+    min-height: 560px;
+    padding: 22px 0 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .stage::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(52, 66, 59, .05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(52, 66, 59, .05) 1px, transparent 1px);
+    background-size: 36px 36px;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 72%);
+    mask-image: radial-gradient(ellipse at center, #000 0%, transparent 72%);
+    opacity: .55;
+  }
+  .stage-sun{
+    position: absolute;
+    top: 50%; left: 50%;
+    width: clamp(280px, 38vw, 370px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -54%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #f8ebe6 0%, #f1dbd5 55%, #ecd2cb 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .4);
+    opacity: .62;
+    z-index: 0;
+    transition: transform .6s ease, opacity .5s ease;
+  }
+  .stage-ring{
+    position: absolute;
+    top: 50%; left: 50%;
+    width: min(500px, 90%);
+    aspect-ratio: 1;
+    transform: translate(-50%, -56%);
+    border: 1px solid rgba(85, 116, 95, .15);
+    border-radius: 50%;
+    z-index: 0;
+  }
+  .stage-ring::before{
+    content: "";
+    position: absolute;
+    top: -3px; left: 50%;
+    width: 5px; height: 5px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: var(--mint);
+  }
+  .stage-caption{
+    position: absolute;
+    top: 26px; right: 3px;
+    z-index: 1;
+    writing-mode: vertical-rl;
+    font-family: var(--serif);
+    font-size: 10px;
+    letter-spacing: .3em;
+    line-height: 1.9;
+    color: var(--ink-3);
+  }
+  .stage-caption::after{
+    content: "";
+    display: block;
+    width: 1px;
+    height: 44px;
+    margin: 12px auto 0;
+    background: linear-gradient(var(--line-dark), transparent);
+  }
+  .stage.has-result .stage-sun{ transform: translate(-50%, -52%) scale(1.03); opacity: .52; }
+
+  .omikuji{
+    position: relative;
+    z-index: 2;
+    width: min(330px, 86%);
+    filter: drop-shadow(0 24px 30px rgba(52, 66, 59, .10));
+    animation: float 7s ease-in-out infinite;
+    transition: opacity .35s ease, transform .5s ease;
+  }
+  .omikuji-svg{ display: block; width: 100%; height: auto; overflow: visible; }
+  .box-kanji{ font-family: var(--serif); font-size: 34px; font-weight: 500; fill: var(--ink); letter-spacing: .12em; }
+  .box-en{ font-family: var(--mono); font-size: 6.5px; letter-spacing: .28em; fill: var(--ink-3); }
+  .slot-text{ font-family: var(--jp); font-size: 9px; letter-spacing: .16em; fill: #f8f5ed; }
+  .seal-text{ font-family: var(--serif); font-size: 9px; letter-spacing: .02em; fill: var(--sakura-deep); }
+  .omikuji.is-shaking{ animation: box-shake .62s cubic-bezier(.36, .07, .19, .97); }
+  .stage.has-result .omikuji{
+    position: absolute;
+    opacity: 0;
+    transform: translateY(14px) scale(.97);
+    pointer-events: none;
+    animation: none;
+  }
+
+  .stage-hint{
+    position: absolute;
+    left: 50%; bottom: 13px;
+    z-index: 1;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    font-size: 9.5px;
+    letter-spacing: .16em;
+    color: var(--ink-3);
+  }
+  .stage-hint::before, .stage-hint::after{
+    content: "";
+    width: 16px; height: 1px;
+    background: var(--line-dark);
+  }
+
+  /* ---------- result slip ---------- */
+  .result{
+    position: relative;
+    z-index: 2;
+    width: min(420px, 100%);
+  }
+  .result[hidden]{ display: none; }
+  .result-slip{
+    position: relative;
+    padding: 26px 30px 22px;
+    background:
+      repeating-linear-gradient(transparent 0 31px, rgba(52, 66, 59, .025) 31px 32px),
+      linear-gradient(160deg, #fffdf8 0%, #fffcf3 100%);
+    border: 1px solid #e5e0d2;
+    border-radius: 3px 3px 8px 8px;
+    box-shadow: var(--shadow), 0 1px 0 rgba(255, 255, 255, .9) inset;
+    overflow: hidden;
+  }
+  .result-slip::after{
+    content: "";
+    position: absolute;
+    left: 18px; right: 18px; bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(233, 198, 192, .65), transparent);
+    opacity: .55;
+  }
+  .tape{
+    position: absolute;
+    top: -11px; left: 50%;
+    width: 92px; height: 20px;
+    transform: translateX(-50%) rotate(-2deg);
+    background: rgba(184, 206, 193, .45);
+    border-left: 1px dashed rgba(255, 255, 255, .65);
+    border-right: 1px dashed rgba(255, 255, 255, .65);
+    box-shadow: 0 1px 2px rgba(52, 66, 59, .07);
+    z-index: 3;
+  }
+  .slip-top{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 8.5px;
+    letter-spacing: .2em;
+    color: var(--ink-3);
+  }
+  .slip-brand{ display: flex; align-items: center; gap: 7px; font-family: var(--jp); }
+  .slip-brand i{ width: 5px; height: 5px; border-radius: 50%; background: var(--sakura); }
+  .slip-no{ font-family: var(--mono); letter-spacing: .08em; }
+  .slip-no b{ font-weight: 400; color: var(--ink-2); }
+  .rank{
+    position: absolute;
+    top: 58px; right: 30px;
+    z-index: 2;
+    min-width: 52px;
+    padding: 9px 7px;
+    writing-mode: vertical-rl;
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 18px;
+    letter-spacing: .1em;
+    line-height: 1.15;
+    color: var(--sakura-deep);
+    background: rgba(255, 253, 247, .85);
+    border: 1px solid currentColor;
+    transform: rotate(4deg);
+  }
+  .rank::after{
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px solid currentColor;
+    opacity: .32;
+  }
+  .rank[data-rank="大吉"]{ color: var(--sakura-deep); }
+  .rank[data-rank="中吉"]{ color: var(--mint-deep); }
+  .rank[data-rank="吉"]{ color: var(--gold); }
+  .rank[data-rank="小吉"]{ color: var(--mint-deep); }
+  .rank[data-rank="末吉"]{ color: var(--ink-3); }
+  .slip-kicker{
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 8px;
+    letter-spacing: .24em;
+    color: var(--mint-deep);
+    text-transform: uppercase;
+  }
+  .slip-kicker::after{ content: ""; width: 36px; height: 1px; background: var(--line); }
+  .result-choice{
+    margin: 10px 0 14px;
+    max-width: calc(100% - 70px);
+    font-family: var(--serif);
+    font-size: clamp(34px, 4.4vw, 48px);
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: .02em;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .advice{
+    margin: 0;
+    min-height: 72px;
+    padding-right: 6px;
+    font-family: var(--serif);
+    font-size: 13px;
+    line-height: 2.05;
+    letter-spacing: .03em;
+    color: var(--ink-2);
+  }
+  .advice::before{ content: "「"; margin-right: .08em; color: var(--mint-deep); }
+  .advice::after{ content: "」"; margin-left: .08em; color: var(--mint-deep); }
+  .slip-divider{ display: flex; align-items: center; gap: 10px; margin: 20px 0 16px; }
+  .slip-divider::before, .slip-divider::after{ content: ""; flex: 1; height: 1px; background: var(--line); }
+  .slip-divider i{ width: 4px; height: 4px; border: 1px solid var(--line-dark); border-radius: 50%; }
+  .lucky-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+    margin: 0;
+  }
+  .lucky-grid dt{
+    margin: 0 0 2px;
+    font-size: 8px;
+    letter-spacing: .16em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .lucky-grid dd{
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 12.5px;
+    letter-spacing: .02em;
+    color: var(--ink);
+  }
+  .slip-footer{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 22px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .stamp{
+    position: relative;
+    width: 42px; height: 42px;
+    flex: 0 0 42px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--sakura-deep);
+    border-radius: 50%;
+    color: var(--sakura-deep);
+    font-family: var(--serif);
+    font-size: 12px;
+    letter-spacing: .04em;
+    opacity: .8;
+    transform: rotate(-8deg);
+  }
+  .stamp::after{ content: ""; position: absolute; inset: 3px; border: 1px solid currentColor; border-radius: 50%; opacity: .55; }
+  .slip-actions{ margin-left: auto; display: flex; gap: 8px; }
+  .again-btn, .copy-btn{
+    height: 38px;
+    padding: 0 14px;
+    appearance: none;
+    border: 1px solid var(--line-dark);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-2);
+    font-family: var(--sans);
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease, color .2s ease;
+  }
+  .again-btn span{ margin-left: 3px; color: var(--mint-deep); }
+  .again-btn:hover, .copy-btn:hover{ background: rgba(255, 255, 255, .55); border-color: var(--ink-2); color: var(--ink); }
+
+  .result.is-entering .result-slip{ animation: slip-in .72s cubic-bezier(.16, .8, .24, 1) both; }
+  .result.is-leaving .result-slip{ animation: slip-out .22s ease both; }
+
+  /* ---------- meta / history ---------- */
+  .draw-meta{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 13px;
+    border-top: 1px solid var(--line);
+    min-height: 22px;
+    font-size: 9.5px;
+    letter-spacing: .09em;
+    color: var(--ink-3);
+  }
+  .draw-total b{ margin: 0 2px; font-family: var(--mono); font-weight: 400; color: var(--ink); }
+  .history-wrap{ margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .history-label{ flex: 0 0 auto; }
+  .history{ display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; min-width: 0; }
+  .history-chip{
+    max-width: 118px;
+    padding: 3px 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 253, 247, .6);
+    color: var(--ink-2);
+    font-size: 9px;
+    letter-spacing: .02em;
+  }
+  .history-empty{ font-size: 9px; color: var(--ink-3); opacity: .75; }
+
+  /* ---------- footer ---------- */
+  .site-footer{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 20px 0 28px;
+    border-top: 1px solid var(--line);
+    font-size: 8.5px;
+    letter-spacing: .15em;
+    color: var(--ink-3);
+  }
+  .footer-center{ display: flex; align-items: center; gap: 8px; }
+  .footer-center i{ width: 5px; height: 5px; border: 1px solid var(--line-dark); border-radius: 50%; }
+  .footer-mark{ font-family: var(--serif); color: var(--sakura-deep); opacity: .7; }
+
+  .petal{
+    position: absolute;
+    z-index: 3;
+    width: var(--size);
+    height: calc(var(--size) * .82);
+    top: 16%;
+    border-radius: 72% 4% 72% 4%;
+    background: linear-gradient(135deg, #f4d9d4, #e6b7af);
+    opacity: 0;
+    pointer-events: none;
+    animation: petal-fall var(--d) ease-in var(--delay) forwards;
+  }
+
+  .toast{
+    position: fixed;
+    left: 50%; bottom: 30px;
+    z-index: 10001;
+    padding: 10px 18px;
+    transform: translate(-50%, 12px);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper-2);
+    font-size: 11px;
+    letter-spacing: .1em;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 12px 30px -14px rgba(52, 66, 59, .7);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .toast.is-show{ opacity: 1; transform: translate(-50%, 0); }
+
+  .sr-only{
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @keyframes float{
+    0%, 100%{ transform: translateY(0); }
+    50%{ transform: translateY(-7px); }
+  }
+  @keyframes box-shake{
+    0%, 100%{ transform: rotate(0) translateY(0); }
+    18%{ transform: rotate(-2.4deg) translateY(-5px); }
+    38%{ transform: rotate(2.2deg) translateY(-2px); }
+    58%{ transform: rotate(-1.6deg) translateY(-4px); }
+    78%{ transform: rotate(1deg) translateY(-1px); }
+  }
+  @keyframes editor-shake{
+    0%, 100%{ transform: translateX(0); }
+    25%{ transform: translateX(-5px); }
+    50%{ transform: translateX(4px); }
+    75%{ transform: translateX(-2px); }
+  }
+  @keyframes slip-in{
+    from{ opacity: 0; transform: translateY(26px) rotate(-1.2deg) scale(.97); }
+    to{ opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+  }
+  @keyframes slip-out{
+    from{ opacity: 1; transform: translateY(0) scale(1); }
+    to{ opacity: 0; transform: translateY(-9px) scale(.985); }
+  }
+  @keyframes petal-fall{
+    0%{ opacity: 0; transform: translate(0, -30px) rotate(0deg); }
+    12%{ opacity: .8; }
+    100%{ opacity: 0; transform: translate(var(--drift), 370px) rotate(540deg); }
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 940px){
+    .layout{ grid-template-columns: 1fr; gap: 42px; }
+    .write-panel{ max-width: 620px; width: 100%; margin-inline: auto; }
+    .stage-panel{ max-width: 620px; width: 100%; justify-self: center; }
+    .stage{ min-height: 540px; }
+    .stage-sun{ width: clamp(300px, 54vw, 360px); }
+  }
+  @media (max-width: 640px){
+    .page{ --gutter: 20px; }
+    .site-header{ padding-top: 21px; padding-bottom: 15px; gap: 14px; }
+    .seal{ width: 40px; height: 40px; flex-basis: 40px; font-size: 12px; }
+    .brand-title{ font-size: 18px; }
+    .brand-sub{ font-size: 7.5px; letter-spacing: .2em; }
+    .header-tagline{ display: none; }
+    .header-right{ font-size: 9px; letter-spacing: .08em; }
+    .header-almanac{ font-size: 8.5px; }
+    .layout{ padding: 32px 0 22px; gap: 40px; }
+    .section-label{ font-size: 8.5px; }
+    h1{ margin-top: 16px; font-size: clamp(33px, 9.4vw, 43px); }
+    .lede{ font-size: 12.2px; }
+    .presets{ margin-top: 22px; }
+    .chip{ height: 29px; padding: 0 11px; font-size: 10px; }
+    .editor-shell{ margin-top: 18px; }
+    .editor-body, #options{ height: 150px; }
+    .line-numbers{ line-height: 24px; padding-top: 11px; padding-bottom: 11px; }
+    .line-numbers span{ height: 24px; }
+    #options{ padding-top: 11px; padding-bottom: 11px; font-size: 12px; }
+    .actions{ flex-wrap: wrap; gap: 10px; }
+    .draw-btn{ flex: 1 1 100%; height: 50px; }
+    .action-note{ font-size: 9px; }
+    .quote{ margin-top: 22px; font-size: 11px; }
+    .stage{ min-height: 500px; margin-top: 12px; padding-top: 16px; }
+    .stage-sun{ width: 290px; }
+    .stage-ring{ width: min(420px, 96%); }
+    .stage-caption{ display: none; }
+    .omikuji{ width: min(278px, 84%); }
+    .stage-hint{ font-size: 9px; letter-spacing: .1em; }
+    .result{ width: 100%; }
+    .result-slip{ padding: 23px 21px 19px; }
+    .slip-top{ font-size: 8px; }
+    .rank{ top: 54px; right: 20px; min-width: 46px; padding: 7px 6px; font-size: 16px; }
+    .slip-kicker{ margin-top: 24px; }
+    .result-choice{ font-size: 33px; max-width: calc(100% - 58px); }
+    .advice{ font-size: 12.5px; line-height: 2; min-height: 64px; }
+    .slip-divider{ margin: 17px 0 14px; }
+    .lucky-grid{ gap: 12px 14px; }
+    .lucky-grid dd{ font-size: 12px; }
+    .slip-footer{ margin-top: 18px; padding-top: 12px; }
+    .stamp{ width: 38px; height: 38px; flex-basis: 38px; font-size: 11px; }
+    .again-btn, .copy-btn{ height: 36px; padding: 0 11px; font-size: 10px; }
+    .draw-meta{ flex-wrap: wrap; gap: 8px; }
+    .history-wrap{ width: 100%; margin-left: 0; justify-content: space-between; }
+    .history{ justify-content: flex-end; }
+    .site-footer{ flex-direction: column; align-items: flex-start; gap: 7px; font-size: 8px; padding-bottom: 24px; }
+  }
+  @media (max-width: 380px){
+    .brand-sub{ display: none; }
+    .result-choice{ font-size: 29px; }
+    .lucky-grid{ grid-template-columns: 1fr; gap: 10px; }
+    .slip-actions{ gap: 6px; }
+    .again-btn, .copy-btn{ padding: 0 9px; font-size: 9.5px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="site-header">
+    <div class="brand">
+      <span class="seal" aria-hidden="true">日和</span>
+      <span>
+        <span class="brand-title">代码日和</span>
+        <span class="brand-sub">代码决策器 · Code Biyori</span>
+      </span>
+    </div>
+    <div class="header-right">
+      <div class="header-date" id="headerDate">2026.10.24 · SAT</div>
+      <div class="header-almanac"><span class="yi">宜</span> 写代码 · <span class="ji">忌</span> 反复横跳<span class="header-tagline" lang="ja">　迷ったら、引く。</span></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="write-panel" aria-labelledby="pageTitle">
+      <div class="section-label">
+        <span class="num">01</span><span class="rule"></span><span>写下纠结</span>
+      </div>
+      <h1 id="pageTitle">把选择，<br><span class="hl">交给一阵风。</span></h1>
+      <p class="lede">代码世界里总有选不完的分支。把纠结写进下面这张小纸，抽一支签，替今天做一个温柔的决定。</p>
+
+      <div class="presets">
+        <div class="presets-head"><span>小签主题</span><span class="jp" lang="ja">クイックスタート</span></div>
+        <div class="chips" id="presetChips">
+          <button class="chip" type="button" data-preset="stack">技术栈</button>
+          <button class="chip" type="button" data-preset="next">先做哪个</button>
+          <button class="chip" type="button" data-preset="refactor">要不要重构</button>
+          <button class="chip" type="button" data-preset="naming">命名风格</button>
+          <button class="chip" type="button" data-preset="drink">今晚喝什么</button>
+        </div>
+      </div>
+
+      <div class="editor-shell" id="editorShell">
+        <div class="editor-bar">
+          <div class="win-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+          <span class="file-name">options.txt</span>
+          <span class="editor-count" id="editorCount">4 个选项</span>
+          <button class="clear-btn" type="button" id="clearBtn">清空</button>
+        </div>
+        <div class="editor-body">
+          <div class="line-numbers" id="lineNumbers" aria-hidden="true"></div>
+          <textarea id="options" aria-label="选项，每行一个" spellcheck="false" placeholder="每行一个选项…"></textarea>
+        </div>
+      </div>
+      <p class="error" id="error" aria-live="polite"></p>
+
+      <div class="actions">
+        <button class="draw-btn" type="button" id="drawBtn">
+          <span class="draw-btn-label" id="drawLabel">抽一支签</span>
+          <span class="kana" lang="ja">ひく</span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </button>
+        <span class="action-note">每行一个选项 · 至少两个<br>Ctrl / ⌘ + Enter 也能抽签</span>
+      </div>
+
+      <p class="quote">「决定不了的事，就交给一点点随机，<br>和一点点直觉。」</p>
+    </section>
+
+    <section class="stage-panel" aria-label="抽签区">
+      <div class="section-label">
+        <span class="num">02</span><span class="rule"></span><span>抽一支签</span>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="stage-sun" aria-hidden="true"></div>
+        <div class="stage-ring" aria-hidden="true"></div>
+        <div class="stage-caption" aria-hidden="true">コード日和<br>二〇二六</div>
+
+        <div class="omikuji" id="omikuji">
+          <svg class="omikuji-svg" viewBox="0 0 360 470" role="img" aria-label="一只装着纸条的御籤木箱">
+            <ellipse cx="180" cy="446" rx="120" ry="14" fill="#34423b" opacity=".07"/>
+            <g stroke-linecap="round">
+              <line x1="101" y1="63" x2="101" y2="258" stroke="#cbd6cc" stroke-width="12"/>
+              <line x1="101" y1="63" x2="101" y2="258" stroke="#fbf8ee" stroke-width="8"/>
+              <line x1="127" y1="79" x2="127" y2="258" stroke="#d2dcd3" stroke-width="12"/>
+              <line x1="127" y1="79" x2="127" y2="258" stroke="#eaf0e9" stroke-width="8"/>
+              <line x1="153" y1="56" x2="153" y2="258" stroke="#d5d8ce" stroke-width="12"/>
+              <line x1="153" y1="56" x2="153" y2="258" stroke="#f5ecdf" stroke-width="8"/>
+              <line x1="179" y1="89" x2="179" y2="258" stroke="#d9d0cc" stroke-width="12"/>
+              <line x1="179" y1="89" x2="179" y2="258" stroke="#f4e3df" stroke-width="8"/>
+              <line x1="205" y1="69" x2="205" y2="258" stroke="#ccd6cd" stroke-width="12"/>
+              <line x1="205" y1="69" x2="205" y2="258" stroke="#fbf8ee" stroke-width="8"/>
+              <line x1="231" y1="84" x2="231" y2="258" stroke="#d6d8ce" stroke-width="12"/>
+              <line x1="231" y1="84" x2="231" y2="258" stroke="#eaf0e9" stroke-width="8"/>
+              <line x1="257" y1="62" x2="257" y2="258" stroke="#d9d0cc" stroke-width="12"/>
+              <line x1="257" y1="62" x2="257" y2="258" stroke="#f4e3df" stroke-width="8"/>
+            </g>
+            <g>
+              <rect x="52" y="250" width="256" height="172" rx="7" fill="#fffaf0" stroke="#4c5a52" stroke-width="1.3"/>
+              <rect x="45" y="238" width="270" height="24" rx="8" fill="#e2ede6" stroke="#4c5a52" stroke-width="1.3"/>
+              <path d="M45 261.5 H315" stroke="#4c5a52" stroke-width="1" opacity=".5"/>
+              <rect x="70" y="286" width="220" height="109" rx="3" fill="#fffdf7" stroke="#d7dcd1" stroke-width="1"/>
+              <path d="M84 310 H276" stroke="#e4e7dd" stroke-width="1"/>
+              <text class="box-kanji" x="177" y="333" text-anchor="middle">御籤</text>
+              <text class="box-en" x="180" y="353" text-anchor="middle">CODE OMIKUJI</text>
+              <rect x="129" y="365" width="102" height="22" rx="11" fill="#3a473f"/>
+              <text class="slot-text" x="180" y="380" text-anchor="middle">ひく</text>
+              <g transform="rotate(-6 282 379)">
+                <rect x="267" y="364" width="30" height="30" rx="2" fill="#f6e3df" stroke="#a9675e" stroke-width="1.1"/>
+                <text class="seal-text" x="282" y="383" text-anchor="middle">日和</text>
+              </g>
+              <path d="M64 408 C 125 400, 235 412, 296 402" fill="none" stroke="#34423b" stroke-width=".8" opacity=".12"/>
+              <path d="M64 416 C 130 409, 224 419, 290 410" fill="none" stroke="#34423b" stroke-width=".8" opacity=".08"/>
+            </g>
+            <g fill="#e8c2bb">
+              <path d="M292 226 c 7 -10 17 -9 20 1 c -8 8 -16 8 -20 -1z" opacity=".9"/>
+              <path d="M306 237 c 5 -7 12 -6 14 1 c -6 6 -11 6 -14 -1z" opacity=".55"/>
+            </g>
+          </svg>
+        </div>
+
+        <article class="result" id="result" hidden>
+          <div class="result-slip">
+            <span class="tape" aria-hidden="true"></span>
+            <div class="slip-top">
+              <span class="slip-brand"><i aria-hidden="true"></i>コード御籤</span>
+              <span class="slip-no">No. <b id="resultNo">001</b></span>
+            </div>
+            <div class="rank" id="rank" data-rank="大吉">大吉</div>
+            <div class="slip-kicker">今日の答え · The Answer</div>
+            <h2 class="result-choice" id="resultChoice">先写测试</h2>
+            <p class="advice" id="resultAdvice">先跑通，再优雅。顺序反了，会多写三天。</p>
+            <div class="slip-divider" aria-hidden="true"><i></i></div>
+            <dl class="lucky-grid">
+              <div><dt>幸运语言 · Language</dt><dd id="luckyLanguage">TypeScript</dd></div>
+              <div><dt>幸运缩进 · Indent</dt><dd id="luckyIndent">2 spaces</dd></div>
+              <div><dt>幸运提交 · Commit</dt><dd id="luckyCommit">feat: 小小地前进</dd></div>
+              <div><dt>幸运快捷键 · Key</dt><dd id="luckyKey">⌘ S</dd></div>
+            </dl>
+            <div class="slip-footer">
+              <div class="stamp" aria-hidden="true">採用</div>
+              <div class="slip-actions">
+                <button class="again-btn" type="button" id="againBtn">再抽一支 <span aria-hidden="true">↻</span></button>
+                <button class="copy-btn" type="button" id="copyBtn">复制</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <div class="stage-hint" id="stageHint">
+          <span>轻摇签筒，抽一支属于今天的签。</span>
+        </div>
+      </div>
+
+      <div class="draw-meta">
+        <span class="draw-total">今日已抽 <b id="drawCount">0</b> 支</span>
+        <div class="history-wrap">
+          <span class="history-label">最近 ·</span>
+          <div class="history" id="history"><span class="history-empty">还没有</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Code Biyori · 一个温柔的代码决策器</span>
+    <span class="footer-center"><span class="footer-mark">◯</span> 随机只是开始，动手才是答案</span>
+    <span>© <span id="footerYear">2026</span> 代码日和</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<p class="sr-only" id="announcer" aria-live="polite"></p>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+  const ta = $('#options');
+  const editorShell = $('#editorShell');
+  const lineNumbers = $('#lineNumbers');
+  const editorCount = $('#editorCount');
+  const clearBtn = $('#clearBtn');
+  const drawBtn = $('#drawBtn');
+  const drawLabel = $('#drawLabel');
+  const presetChips = $('#presetChips');
+  const errorEl = $('#error');
+  const stage = $('#stage');
+  const omikuji = $('#omikuji');
+  const result = $('#result');
+  const resultNo = $('#resultNo');
+  const rankEl = $('#rank');
+  const choiceEl = $('#resultChoice');
+  const adviceEl = $('#resultAdvice');
+  const luckyLanguage = $('#luckyLanguage');
+  const luckyIndent = $('#luckyIndent');
+  const luckyCommit = $('#luckyCommit');
+  const luckyKey = $('#luckyKey');
+  const againBtn = $('#againBtn');
+  const copyBtn = $('#copyBtn');
+  const drawCountEl = $('#drawCount');
+  const historyEl = $('#history');
+  const stageHint = $('#stageHint');
+  const announcer = $('#announcer');
+  const toast = $('#toast');
+  const headerDate = $('#headerDate');
+  const footerYear = $('#footerYear');
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const PRESETS = {
+    stack: ['React', 'Vue', 'Svelte', '原生 JavaScript'],
+    next: ['先写测试', '先改样式', '先修那个小 bug', '先摸十分钟鱼'],
+    refactor: ['重构', '先补一页注释', '保持现状', '明天再说'],
+    naming: ['camelCase', 'snake_case', 'kebab-case', '让 AI 取名'],
+    drink: ['手冲咖啡', '冰拿铁', '焙茶', '白开水']
+  };
+
+  const RANKS = [
+    ['大吉', 3], ['中吉', 4], ['吉', 4], ['小吉', 3], ['末吉', 2]
+  ];
+
+  const ADVICE = [
+    '先跑通，再优雅。顺序反了，会多写三天。',
+    '如果两个选项一样好，选更短的那个。代码和人生都是。',
+    '今天适合删掉一行代码，而不是加一层抽象。',
+    '把变量名读出声。念起来别扭的，通常也不对。',
+    '测试会告诉你答案，你只需要先写出第一个。',
+    '不是所有分支都需要处理，但所有边界都值得看一眼。',
+    '让咖啡凉一点，让提交小一点。',
+    '直觉已经选好了，你只是还需要一次确认。',
+    '先写下注释，再写实现；思路会自己排队。',
+    '重构的时机不是空闲的时候，是测试通过的时候。',
+    '别在深夜做架构决定。风会停，月亮会替你后悔。',
+    '今天适合做那个一直往后拖的小任务。',
+    '把「以后再说」改成一条 issue，然后放它走。',
+    '任何选择，都比在选项之间反复横跳更接近完成。',
+    '这段代码不需要更聪明，只需要更诚实。',
+    '如果犹豫超过十分钟，就选第一个。它往往是最初的心意。',
+    '写完就提交。完美的未提交代码，价值为零。',
+    '给自己留一个小小的 TODO，明天会谢谢你。',
+    '先把它做对，再把它做快。反过来通常要重来。',
+    '风替你选好了。剩下的，交给手指。'
+  ];
+
+  const LANGUAGES = ['TypeScript', 'Python', 'Rust', 'Go', 'Kotlin', 'Swift', 'Zig', 'SQL', 'Lua', 'Haskell（只是看看）'];
+  const INDENTS = ['2 spaces', '4 spaces', 'tab · 1', '交给 Prettier', '无缩进，横着写'];
+  const COMMITS = ['feat: 小小地前进', 'fix: 顺手牵 bug', 'chore: 擦一擦桌面', 'docs: 写给三个月后', 'refactor: 少一点魔法', 'test: 先相信，再验证'];
+  const KEYS = ['⌘ S', '⌘ Z', 'Ctrl + /', 'Shift + Enter', 'F2 重命名', '⌥ ↑'];
+
+  const state = {
+    drawing: false,
+    count: 0,
+    number: 0,
+    history: [],
+    lastChoice: '',
+    lastText: ''
+  };
+
+  let toastTimer = 0;
+
+  function randomInt(max) {
+    if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+      const buffer = new Uint32Array(1);
+      window.crypto.getRandomValues(buffer);
+      return buffer[0] % max;
+    }
+    return Math.floor(Math.random() * max);
+  }
+
+  function pick(list) {
+    return list[randomInt(list.length)];
+  }
+
+  function pickRank() {
+    const total = RANKS.reduce((sum, item) => sum + item[1], 0);
+    let roll = randomInt(total);
+    for (const [name, weight] of RANKS) {
+      if (roll < weight) return name;
+      roll -= weight;
+    }
+    return RANKS[0][0];
+  }
+
+  function readOptions() {
+    return ta.value
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean);
+  }
+
+  function updateEditor() {
+    const rawLines = ta.value.split('\n');
+    const count = rawLines.filter(line => line.trim()).length;
+
+    lineNumbers.innerHTML = rawLines
+      .map((_, index) => `<span>${index + 1}</span>`)
+      .join('');
+
+    lineNumbers.scrollTop = ta.scrollTop;
+    editorCount.textContent = `${count} 个选项`;
+    editorCount.style.color = count < 2 ? 'var(--sakura-deep)' : '';
+  }
+
+  function setPreset(key) {
+    const values = PRESETS[key];
+    if (!values) return;
+
+    ta.value = values.join('\n');
+    updateEditor();
+    clearError();
+    $$('.chip', presetChips).forEach(chip => {
+      chip.classList.toggle('is-active', chip.dataset.preset === key);
+    });
+  }
+
+  function showError(message) {
+    errorEl.textContent = message;
+    errorEl.classList.add('show');
+    editorShell.classList.remove('has-error');
+    void editorShell.offsetWidth;
+    editorShell.classList.add('has-error');
+    announcer.textContent = message;
+  }
+
+  function clearError() {
+    errorEl.classList.remove('show');
+    errorEl.textContent = '';
+    editorShell.classList.remove('has-error');
+  }
+
+  function formatTime() {
+    return new Date().toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
+  function renderHistory() {
+    if (!state.history.length) {
+      historyEl.innerHTML = '<span class="history-empty">还没有</span>';
+      return;
+    }
+
+    historyEl.innerHTML = '';
+    state.history.forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'history-chip';
+      chip.textContent = `${item.time} · ${item.choice}`;
+      chip.title = item.choice;
+      historyEl.appendChild(chip);
+    });
+  }
+
+  function spawnPetals() {
+    if (reduceMotion) return;
+
+    const count = 9;
+    for (let i = 0; i < count; i += 1) {
+      const petal = document.createElement('span');
+      petal.className = 'petal';
+      petal.style.left = `${7 + Math.random() * 86}%`;
+      petal.style.setProperty('--size', `${5 + Math.random() * 5}px`);
+      petal.style.setProperty('--d', `${1.3 + Math.random() * 1.1}s`);
+      petal.style.setProperty('--delay', `${Math.random() * 0.35}s`);
+      petal.style.setProperty('--drift', `${Math.random() * 80 - 40}px`);
+      stage.appendChild(petal);
+      window.setTimeout(() => petal.remove(), 3000);
+    }
+  }
+
+  function setChoiceSize(choice) {
+    const length = Array.from(choice).length;
+    if (length > 24) {
+      choiceEl.style.fontSize = 'clamp(20px, 5vw, 28px)';
+    } else if (length > 12) {
+      choiceEl.style.fontSize = 'clamp(25px, 6vw, 37px)';
+    } else {
+      choiceEl.style.fontSize = '';
+    }
+  }
+
+  function renderResult(options) {
+    state.number += 1;
+    state.count += 1;
+
+    const rank = pickRank();
+    let choice = pick(options);
+
+    if (options.length > 1 && choice === state.lastChoice) {
+      const index = options.indexOf(choice);
+      choice = options[(index + 1 + randomInt(options.length - 1)) % options.length];
+    }
+
+    state.lastChoice = choice;
+
+    const advice = pick(ADVICE);
+    const language = pick(LANGUAGES);
+    const indent = pick(INDENTS);
+    const commit = pick(COMMITS);
+    const key = pick(KEYS);
+
+    resultNo.textContent = String(state.number).padStart(3, '0');
+    rankEl.textContent = rank;
+    rankEl.dataset.rank = rank;
+    choiceEl.textContent = choice;
+    setChoiceSize(choice);
+    adviceEl.textContent = advice;
+    luckyLanguage.textContent = language;
+    luckyIndent.textContent = indent;
+    luckyCommit.textContent = commit;
+    luckyKey.textContent = key;
+
+    drawCountEl.textContent = state.count;
+
+    state.history.unshift({ time: formatTime(), choice });
+    state.history = state.history.slice(0, 3);
+    renderHistory();
+
+    state.lastText = [
+      '代码日和 · 今日代码签',
+      `${rank} / ${choice}`,
+      `「${advice}」`,
+      `幸运语言：${language}`,
+      `幸运缩进：${indent}`,
+      `幸运提交：${commit}`,
+      `幸运快捷键：${key}`
+    ].join('\n');
+
+    announcer.textContent = `抽签结果：${rank}，${choice}。${advice}`;
+  }
+
+  function draw() {
+    const options = readOptions();
+
+    if (options.length < 2) {
+      showError(options.length === 0 ? '签筒还是空的，先写下两个选项。' : '至少写下两个选项，才有得选。');
+      ta.focus();
+      return;
+    }
+
+    if (state.drawing) return;
+
+    state.drawing = true;
+    drawBtn.disabled = true;
+    drawBtn.classList.add('is-loading');
+    drawLabel.textContent = '摇签中';
+    clearError();
+    omikuji.classList.add('is-shaking');
+    spawnPetals();
+
+    const hadResult = !result.hidden;
+    if (hadResult) {
+      result.classList.add('is-leaving');
+      stage.classList.remove('has-result');
+      window.setTimeout(() => {
+        result.hidden = true;
+        result.classList.remove('is-leaving');
+      }, 240);
+    }
+
+    stageHint.querySelector('span').textContent = '风来了，正在替你选…';
+
+    const revealDelay = reduceMotion ? 120 : 640;
+    const finishDelay = reduceMotion ? 260 : 900;
+
+    window.setTimeout(() => {
+      renderResult(options);
+      result.hidden = false;
+      stage.classList.add('has-result');
+      result.classList.remove('is-entering');
+      void result.offsetWidth;
+      result.classList.add('is-entering');
+      window.setTimeout(() => result.classList.remove('is-entering'), 820);
+      omikuji.classList.remove('is-shaking');
+      stageHint.querySelector('span').textContent = '答案在纸上，也可以再抽一支。';
+
+      if (window.matchMedia('(max-width: 940px)').matches) {
+        window.setTimeout(() => {
+          stage.scrollIntoView({ behavior: 'auto', block: 'center' });
+        }, 80);
+      }
+    }, revealDelay);
+
+    window.setTimeout(() => {
+      state.drawing = false;
+      drawBtn.disabled = false;
+      drawBtn.classList.remove('is-loading');
+      drawLabel.textContent = '抽一支签';
+    }, finishDelay);
+  }
+
+  async function copyResult() {
+    if (!state.lastText) return;
+
+    try {
+      await navigator.clipboard.writeText(state.lastText);
+      showToast('已复制今日签文');
+    } catch (error) {
+      const helper = document.createElement('textarea');
+      helper.value = state.lastText;
+      helper.setAttribute('readonly', '');
+      helper.style.position = 'fixed';
+      helper.style.left = '-9999px';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+      try {
+        document.execCommand('copy');
+        showToast('已复制今日签文');
+      } catch (fallbackError) {
+        showToast('复制失败，可以手动选中签文');
+      }
+      helper.remove();
+    }
+  }
+
+  function showToast(message) {
+    window.clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.classList.add('is-show');
+    toastTimer = window.setTimeout(() => {
+      toast.classList.remove('is-show');
+    }, 2200);
+  }
+
+  function initDate() {
+    const now = new Date();
+    const week = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][now.getDay()];
+    const pad = value => String(value).padStart(2, '0');
+    headerDate.textContent = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} · ${week}`;
+    footerYear.textContent = String(now.getFullYear());
+  }
+
+  // Events
+  presetChips.addEventListener('click', event => {
+    const chip = event.target.closest('.chip');
+    if (!chip) return;
+    setPreset(chip.dataset.preset);
+  });
+
+  ta.addEventListener('input', () => {
+    updateEditor();
+    clearError();
+    $$('.chip', presetChips).forEach(chip => chip.classList.remove('is-active'));
+  });
+
+  ta.addEventListener('scroll', () => {
+    lineNumbers.scrollTop = ta.scrollTop;
+  });
+
+  clearBtn.addEventListener('click', () => {
+    ta.value = '';
+    updateEditor();
+    clearError();
+    $$('.chip', presetChips).forEach(chip => chip.classList.remove('is-active'));
+    ta.focus();
+  });
+
+  drawBtn.addEventListener('click', draw);
+  againBtn.addEventListener('click', draw);
+  copyBtn.addEventListener('click', copyResult);
+
+  document.addEventListener('keydown', event => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+      draw();
+    }
+  });
+
+  // Init
+  initDate();
+  setPreset('next');
+  ta.setSelectionRange(0, 0);
+})();
+</script>
+</body>
+</html>
